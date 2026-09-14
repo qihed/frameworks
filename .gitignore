@@ -1,0 +1,30 @@
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Кеш и байт-код Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Артефакты сборки и упаковки
+build/
+dist/
+*.egg-info/
+
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Настройки IDE
+.idea/
+.vscode/
+
+# Служебные файлы ОС
+.DS_Store
+Thumbs.db
+
+# Переменные окружения
+.env
