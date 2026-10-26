@@ -4,5 +4,17 @@
     "name": "Даниил",
     "age": 21,
     "email": "daniil@example.com"
+  },
+  {
+    "id": 2,
+    "name": "Мария Смирнова",
+    "age": 17,
+    "email": "maria@example.com"
+  },
+  {
+    "id": 3,
+    "name": "Иван Петров",
+    "age": 30,
+    "email": "ivan@example.com"
   }
 ]

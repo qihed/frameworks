@@ -6,5 +6,45 @@
     "author": "Neil Gaiman",
     "issues_total": 75,
     "age_limit": 18
+  },
+  {
+    "id": 2,
+    "title": "Naruto",
+    "publisher": "Shueisha",
+    "author": "Masashi Kishimoto",
+    "issues_total": 72,
+    "age_limit": 12
+  },
+  {
+    "id": 3,
+    "title": "Saga",
+    "publisher": "Image Comics",
+    "author": "Brian K. Vaughan",
+    "issues_total": 66,
+    "age_limit": 18
+  },
+  {
+    "id": 4,
+    "title": "Watchmen",
+    "publisher": "DC Comics",
+    "author": "Alan Moore",
+    "issues_total": 12,
+    "age_limit": 16
+  },
+  {
+    "id": 5,
+    "title": "Ms. Marvel",
+    "publisher": "Marvel",
+    "author": "G. Willow Wilson",
+    "issues_total": 19,
+    "age_limit": 12
+  },
+  {
+    "id": 6,
+    "title": "Berserk",
+    "publisher": "Hakusensha",
+    "author": "Kentaro Miura",
+    "issues_total": 41,
+    "age_limit": 18
   }
 ]

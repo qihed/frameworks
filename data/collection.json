@@ -6,5 +6,53 @@
     "status_code": 2,
     "issues_read": 31,
     "is_removed": false
+  },
+  {
+    "id": 2,
+    "series_id": 2,
+    "user_id": 2,
+    "status_code": 2,
+    "issues_read": 20,
+    "is_removed": false
+  },
+  {
+    "id": 3,
+    "series_id": 4,
+    "user_id": 1,
+    "status_code": 3,
+    "issues_read": 12,
+    "is_removed": false
+  },
+  {
+    "id": 4,
+    "series_id": 5,
+    "user_id": 2,
+    "status_code": 3,
+    "issues_read": 19,
+    "is_removed": false
+  },
+  {
+    "id": 5,
+    "series_id": 3,
+    "user_id": 3,
+    "status_code": 4,
+    "issues_read": 5,
+    "is_removed": false
+  },
+  {
+    "id": 6,
+    "series_id": 6,
+    "user_id": 3,
+    "status_code": 2,
+    "issues_read": 15,
+    "is_removed": false
+  },
+  {
+    "id": 7,
+    "series_id": 1,
+    "user_id": 3,
+    "status_code": 1,
+    "issues_read": 0,
+    "is_removed": true
   }
 ]
