@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Коллекция – Сервис учёта комиксов
+{% endblock %}
+
+{% block content %}
+    <h1>Коллекция</h1>
+
+    <p>
+        Всего записей: {{ entries|length }}
+    </p>
+
+    <ul class="list-group">
+        {% for entry in entries %}
+            <li class="list-group-item d-flex justify-content-between">
+                <a href="{% url 'collection:detail' entry.id %}">
+                    {{ entry.series.title }} – {{ entry.user.name }}
+                </a>
+                {% include "collection/includes/entry_status.html" %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">
+                Записи коллекции не найдены.
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if series %}
+        {{ series.title }} – Сервис учёта комиксов
+    {% else %}
+        Серия не найдена – Сервис учёта комиксов
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if series %}
+        <div class="card series-card">
+            <div class="card-body">
+                <h1 class="card-title">
+                    {{ series.title }}
+                </h1>
+
+                <p class="card-text">
+                    <strong>ID:</strong> {{ series.id }}
+                </p>
+                <p class="card-text">
+                    <strong>Издатель:</strong> {{ series.publisher }}
+                </p>
+                <p class="card-text">
+                    <strong>Автор:</strong> {{ series.author }}
+                </p>
+                <p class="card-text">
+                    <strong>Выпусков:</strong> {{ series.issues_total }}
+                </p>
+                <p class="card-text">
+                    <strong>Возрастное ограничение:</strong>
+                    {{ series.age_limit }}+
+                </p>
+                <p class="card-text">
+                    <strong>Состояние:</strong>
+                    {% if in_collection %}
+                        <span class="badge bg-success">в коллекции</span>
+                    {% else %}
+                        <span class="badge bg-secondary">не в коллекции</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="text-danger">
+            Серия не найдена
+        </h1>
+        <p>
+            Серия с указанным идентификатором отсутствует.
+        </p>
+    {% endif %}
+
+    <a
+        href="{% url 'series:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к списку серий
+    </a>
+{% endblock %}

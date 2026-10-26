@@ -41,9 +41,11 @@
 
 * Python 3;
 * Django 5.2 — веб-фреймворк;
-* HTML — разметка веб-страниц;
-* CSS и Bootstrap 5.3 (подключается через CDN) — оформление страниц;
+* Django Template Language (DTL) — шаблоны страниц;
+* HTML5, CSS3, JavaScript;
+* Bootstrap 5.3 (подключается через CDN);
 * JSON — хранение данных;
+* Git;
 * pytest — автоматизированные тесты;
 * flake8 — проверка качества кода.
 
@@ -52,8 +54,7 @@
 Django-проект называется `comicstracker` (каталог `comicstracker/`,
 точка управления — `manage.py` в корне репозитория). Приложения:
 
-* `homepage` — главная страница, общий HTML-каркас `page()` и обработчик
-  ошибки 404;
+* `homepage` — главная страница и обработчик ошибки 404;
 * `series` — страницы серий комиксов;
 * `collection` — страницы записей коллекции.
 
@@ -63,25 +64,67 @@ Django-проект называется `comicstracker` (каталог `comics
 веб-страниц.
 
 Маршрутизация двухуровневая: корневой `comicstracker/urls.py`
-подключает `urls.py` приложений через `include()`.
+подключает `urls.py` приложений через `include()`. У каждого приложения
+задан `app_name` (пространство имён), а маршруты именованы.
 
-| URL | View-функция | Назначение |
-|---|---|---|
-| `/` | `homepage.views.index` | главная страница и навигация |
-| `/series/` | `series.views.series_list` | список серий |
-| `/series/<int:series_id>/` | `series.views.series_detail` | карточка серии |
-| `/collection/` | `collection.views.collection_list` | список записей коллекции |
-| `/collection/<int:entry_id>/` | `collection.views.entry_detail` | карточка записи |
+| URL | Имя маршрута | View-функция | Назначение |
+|---|---|---|---|
+| `/` | `homepage:index` | `homepage.views.index` | главная страница |
+| `/series/` | `series:list` | `series.views.series_list` | список серий |
+| `/series/<int:series_id>/` | `series:detail` | `series.views.series_detail` | карточка серии |
+| `/collection/` | `collection:list` | `collection.views.collection_list` | список записей коллекции |
+| `/collection/<int:entry_id>/` | `collection:detail` | `collection.views.entry_detail` | карточка записи |
 
 Если серия или запись с указанным идентификатором не найдена, страница
-возвращает код статуса 404. Для любого неизвестного адреса настроен
-собственный обработчик `handler404`
-(`homepage.views.page_not_found`); он проявляется при `DEBUG = False`.
+возвращает код статуса 404 (`status=404 if ... is None else 200`).
+Для любого неизвестного адреса настроен собственный обработчик
+`handler404` (`homepage.views.page_not_found`).
 
-Данные веб-страниц загружаются из JSON-файлов функциями `storage.py`
-в объекты классов `Series`, `User` и `CollectionEntry` (ПР3). Операции,
-меняющие данные (добавление, удаление, формы), остаются в консольной
-версии и появятся в вебе после изучения форм и моделей Django.
+Данные загружаются из JSON-файлов функциями `storage.py` в объекты
+классов `Series`, `User` и `CollectionEntry` (ПР3). Django ORM пока не
+используется, формы ещё не реализованы, данные пока хранятся в JSON;
+работа с базой данных относится к следующим практическим работам.
+
+## Django Template Language
+
+HTML вынесен из Python-кода в шаблоны; view-функции только готовят
+данные и вызывают `render(request, "шаблон.html", context)`. Функция
+`page()` из ПР5 больше не используется.
+
+* **Базовый шаблон** `templates/base.html` задаёт общую структуру
+  страницы: кодировку, подключение Bootstrap и собственного CSS, логотип,
+  навигацию, подвал, JavaScript. Блоки: `{% block title %}` и
+  `{% block content %}`.
+* **Наследование**: все страницы начинаются с `{% extends "base.html" %}`
+  и переопределяют блоки.
+* **Включаемые шаблоны** (`{% include %}`):
+  `templates/includes/navigation.html` (навигация),
+  `series/includes/series_card.html` (карточка серии),
+  `collection/includes/entry_status.html` (статус записи).
+* **Контекст**: списки передаются как `series_items` и `entries`,
+  отдельные объекты — как `series` и `entry`; для страниц с одним
+  объектом отсутствие объекта обрабатывается ветвью `{% else %}`.
+* **Циклы и условия**: `{% for %}` с `{% empty %}` для пустых списков,
+  `{% if %}` / `{% elif %}` для статуса записи и состояния серии.
+* **Именованные URL**: ссылки формируются через `{% url 'series:list' %}`,
+  `{% url 'series:detail' series.id %}` и т. п., жёстко заданных адресов
+  в шаблонах нет.
+* **Фильтры**: `{{ series_items|length }}` (количество серий),
+  `{{ series.title|default:"Без названия" }}` (значение по умолчанию),
+  `{{ entry.calculate_progress|floatformat:1 }}` (форматирование
+  процента прогресса).
+
+## Статические файлы
+
+Каталог `homepage/static/homepage/`:
+
+* `css/style.css` — собственные стили (шапка, карточки `series-card`,
+  статусы `entry-status`, логотип);
+* `js/main.js` — вывод текущего года в подвале;
+* `img/logo.png` — логотип.
+
+В шаблонах используются `{% load static %}` и `{% static '...' %}`.
+Bootstrap сохранён для базовой вёрстки, собственный CSS дополняет его.
 
 ## Основные сущности
 
@@ -220,13 +263,33 @@ frameworks/
 │   ├── asgi.py
 │   └── wsgi.py
 │
+├── templates/
+│   ├── base.html
+│   └── includes/
+│       └── navigation.html
+│
 ├── homepage/
+│   ├── static/homepage/
+│   │   ├── css/style.css
+│   │   ├── js/main.js
+│   │   └── img/logo.png
+│   ├── templates/homepage/
+│   │   ├── index.html
+│   │   └── 404.html
 │   ├── views.py
 │   └── urls.py
 ├── series/
+│   ├── templates/series/
+│   │   ├── series_list.html
+│   │   ├── series_detail.html
+│   │   └── includes/series_card.html
 │   ├── views.py
 │   └── urls.py
 ├── collection/
+│   ├── templates/collection/
+│   │   ├── entry_list.html
+│   │   ├── entry_detail.html
+│   │   └── includes/entry_status.html
 │   ├── views.py
 │   └── urls.py
 │
@@ -256,7 +319,8 @@ frameworks/
 * `manage.py`, `comicstracker/` — Django-проект (настройки, маршрутизация
   верхнего уровня);
 * `homepage/`, `series/`, `collection/` — Django-приложения
-  (view-функции и маршруты веб-страниц);
+  (view-функции, маршруты, шаблоны страниц, статические файлы);
+* `templates/` — шаблоны уровня проекта (`base.html`, навигация);
 * `main.py` — консольная версия приложения: главное меню и
   пользовательские сценарии (сохранена с ПР3);
   работает с объектами `Series`, `User` и `CollectionEntry`, не хранит
@@ -309,10 +373,12 @@ flake8 . --extend-exclude=venv
 
 На следующих этапах планируется:
 
-* шаблоны Django, контекст и статические файлы;
-* подключение базы данных и описание моделей через ORM;
-* реализация регистрации, аутентификации и разграничения доступа;
-* реализация форм создания и изменения данных, административной зоны;
+* база данных SQLite и SQL-запросы (ПР7);
+* перенос сущностей `Series`, `User` и `CollectionEntry` в модели
+  Django и Django ORM;
+* формы создания и редактирования записей коллекции;
+* регистрация, аутентификация и разграничение доступа;
+* административная зона;
 * разработка REST API;
 * контейнеризация приложения в Docker;
 * настройка CI/CD.

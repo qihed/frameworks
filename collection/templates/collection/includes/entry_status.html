@@ -1,0 +1,21 @@
+{% if entry.is_removed %}
+    <span class="badge bg-secondary entry-status entry-status-removed">
+        Удалено
+    </span>
+{% elif entry.status_code == 2 %}
+    <span class="badge bg-primary entry-status entry-status-reading">
+        Читаю
+    </span>
+{% elif entry.status_code == 3 %}
+    <span class="badge bg-success entry-status entry-status-finished">
+        Прочитано
+    </span>
+{% elif entry.status_code == 4 %}
+    <span class="badge bg-danger entry-status entry-status-dropped">
+        Брошено
+    </span>
+{% else %}
+    <span class="badge bg-info entry-status entry-status-planned">
+        Запланировано
+    </span>
+{% endif %}

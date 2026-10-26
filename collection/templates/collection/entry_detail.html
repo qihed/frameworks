@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if entry %}
+        Запись коллекции №{{ entry.id }} – Сервис учёта комиксов
+    {% else %}
+        Запись не найдена – Сервис учёта комиксов
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if entry %}
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">
+                    Запись коллекции №{{ entry.id }}
+                </h1>
+
+                <p class="card-text">
+                    <strong>Серия:</strong>
+                    <a href="{% url 'series:detail' entry.series.id %}">
+                        {{ entry.series.title }}
+                    </a>
+                </p>
+                <p class="card-text">
+                    <strong>Пользователь:</strong>
+                    {{ entry.user.name }}
+                </p>
+                <p class="card-text">
+                    <strong>Прогресс:</strong>
+                    {{ entry.issues_read }} из {{ entry.series.issues_total }}
+                    ({{ entry.calculate_progress|floatformat:1 }} %)
+                </p>
+                <p class="card-text">
+                    <strong>Осталось прочитать:</strong>
+                    {{ entry.count_issues_left }}
+                </p>
+                <p class="card-text">
+                    <strong>Статус:</strong>
+                    {% include "collection/includes/entry_status.html" %}
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="text-danger">
+            Запись коллекции не найдена
+        </h1>
+        <p>
+            Запись с указанным идентификатором отсутствует.
+        </p>
+    {% endif %}
+
+    <a
+        href="{% url 'collection:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к коллекции
+    </a>
+{% endblock %}

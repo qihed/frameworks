@@ -1,0 +1,35 @@
+body {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.site-header {
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 0;
+    background-color: #ffffff;
+    border-bottom: 4px solid #ffd60a;
+}
+
+.comics-logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: 0.5rem;
+}
+
+.series-card {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 2px solid #212529;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 #ffd60a;
+}
+
+.entry-status {
+    align-self: center;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.entry-status-removed {
+    text-decoration: line-through;
+}

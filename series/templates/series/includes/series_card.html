@@ -1,0 +1,21 @@
+<article class="card series-card mb-3">
+    <div class="card-body">
+        <h2 class="card-title h4">
+            {{ series.title|default:"Без названия" }}
+        </h2>
+
+        <p class="card-text">
+            {{ series.publisher }} · {{ series.author }}
+        </p>
+        <p class="card-text">
+            Выпусков: {{ series.issues_total }} · {{ series.age_limit }}+
+        </p>
+
+        <a
+            href="{% url 'series:detail' series.id %}"
+            class="btn btn-primary"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Серии – Сервис учёта комиксов
+{% endblock %}
+
+{% block content %}
+    <h1>Серии</h1>
+
+    <p>
+        Всего серий: {{ series_items|length }}
+    </p>
+
+    {% for series in series_items %}
+        {% include "series/includes/series_card.html" %}
+    {% empty %}
+        <p>Серии не найдены.</p>
+    {% endfor %}
+{% endblock %}

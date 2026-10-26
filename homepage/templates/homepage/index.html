@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Главная – Сервис учёта комиксов
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-4">Сервис учёта комиксов</h1>
+
+    <p class="lead">
+        Личная коллекция комиксов, манги и графических романов.
+    </p>
+    <p>
+        Следите за прогрессом чтения серий, отмечайте статус каждого
+        издания и не теряйте, что осталось прочитать.
+    </p>
+    <p>Основные разделы:</p>
+    <a href="{% url 'series:list' %}" class="btn btn-primary me-2">
+        Серии
+    </a>
+    <a href="{% url 'collection:list' %}" class="btn btn-secondary">
+        Коллекция
+    </a>
+{% endblock %}
