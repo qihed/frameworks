@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Доступные серии – Сервис учёта комиксов
+{% endblock %}
+
+{% block content %}
+    <h1>Доступные серии</h1>
+
+    <p>
+        Серии, которые подходят пользователю по возрасту и ещё не
+        добавлены в его коллекцию.
+    </p>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-auto">
+            <label for="user" class="col-form-label">Пользователь:</label>
+        </div>
+        <div class="col-auto">
+            <select id="user" name="user" class="form-select">
+                <option value="">— выберите —</option>
+                {% for user in users %}
+                    <option
+                        value="{{ user.id }}"
+                        {% if selected_user and selected_user.id == user.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ user.name }} ({{ user.age }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Найти</button>
+        </div>
+    </form>
+
+    {% if error %}
+        <p class="text-danger">{{ error }}</p>
+    {% endif %}
+
+    {% if selected_user %}
+        <h2 class="h4">
+            Для пользователя {{ selected_user.name }},
+            {{ selected_user.age }} лет
+        </h2>
+        {% for series in series_items %}
+            {% include "series/includes/series_card.html" %}
+        {% empty %}
+            <p>
+                Подходящих серий нет: все доступные по возрасту серии
+                уже добавлены в коллекцию.
+            </p>
+        {% endfor %}
+    {% endif %}
+
+    <a
+        href="{% url 'series:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к списку серий
+    </a>
+{% endblock %}

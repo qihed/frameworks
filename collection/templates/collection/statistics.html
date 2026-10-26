@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Статистика – Сервис учёта комиксов
+{% endblock %}
+
+{% block content %}
+    <h1>Статистика коллекции</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card series-card">
+                <div class="card-body">
+                    <p class="card-text">Активных записей</p>
+                    <p class="display-6">{{ entries_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card series-card">
+                <div class="card-body">
+                    <p class="card-text">
+                        Серий в базе: {{ series_summary.series_count }},
+                        выпусков всего: {{ series_summary.issues_sum }}.
+                    </p>
+                    <p class="card-text">
+                        В серии в среднем {{ series_summary.issues_avg }}
+                        выпусков (от {{ series_summary.issues_min }}
+                        до {{ series_summary.issues_max }}).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h4">Записи по сериям</h2>
+    <table class="table table-sm mb-4">
+        <thead>
+            <tr><th>Серия</th><th>Записей в коллекциях</th></tr>
+        </thead>
+        <tbody>
+            {% for item in by_series %}
+                <tr>
+                    <td>{{ item.series_title }}</td>
+                    <td>{{ item.entries_count }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="2">Данные отсутствуют.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="h4">Записи по статусам чтения</h2>
+    <table class="table table-sm mb-4">
+        <thead>
+            <tr><th>Статус</th><th>Записей</th></tr>
+        </thead>
+        <tbody>
+            {% for item in by_status %}
+                <tr>
+                    <td>{{ item.status_name|capfirst }}</td>
+                    <td>{{ item.entries_count }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="2">Данные отсутствуют.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="h4">Пользователи</h2>
+    <table class="table table-sm mb-4">
+        <thead>
+            <tr>
+                <th>Пользователь</th>
+                <th>Записей</th>
+                <th>Прочитано выпусков</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in by_user %}
+                <tr>
+                    <td>{{ item.user_name }}</td>
+                    <td>{{ item.entries_count }}</td>
+                    <td>{{ item.issues_read_total }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">Данные отсутствуют.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="h4">Прочитали больше {{ threshold }} выпусков</h2>
+    <ul class="list-group mb-4">
+        {% for item in active_readers %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ item.user_name }}</span>
+                <span class="badge bg-success">
+                    {{ item.issues_read_total }}
+                </span>
+            </li>
+        {% empty %}
+            <li class="list-group-item">
+                Таких пользователей пока нет.
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

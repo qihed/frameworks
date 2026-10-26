@@ -44,7 +44,8 @@
 * Django Template Language (DTL) — шаблоны страниц;
 * HTML5, CSS3, JavaScript;
 * Bootstrap 5.3 (подключается через CDN);
-* JSON — хранение данных;
+* JSON — исходное хранилище данных (ПР1–ПР6);
+* SQLite и модуль `sqlite3` — реляционная база данных (ПР7);
 * Git;
 * pytest — автоматизированные тесты;
 * flake8 — проверка качества кода.
@@ -74,16 +75,18 @@ Django-проект называется `comicstracker` (каталог `comics
 | `/series/<int:series_id>/` | `series:detail` | `series.views.series_detail` | карточка серии |
 | `/collection/` | `collection:list` | `collection.views.collection_list` | список записей коллекции |
 | `/collection/<int:entry_id>/` | `collection:detail` | `collection.views.entry_detail` | карточка записи |
+| `/series/available/?user=<id>` | `series:available` | `series.views.available_series` | серии, доступные пользователю |
+| `/collection/statistics/` | `collection:statistics` | `collection.views.statistics` | статистика коллекции |
 
 Если серия или запись с указанным идентификатором не найдена, страница
 возвращает код статуса 404 (`status=404 if ... is None else 200`).
 Для любого неизвестного адреса настроен собственный обработчик
 `handler404` (`homepage.views.page_not_found`).
 
-Данные загружаются из JSON-файлов функциями `storage.py` в объекты
-классов `Series`, `User` и `CollectionEntry` (ПР3). Django ORM пока не
-используется, формы ещё не реализованы, данные пока хранятся в JSON;
-работа с базой данных относится к следующим практическим работам.
+Начиная с ПР7 view-функции получают данные SQL-запросами к базе SQLite
+(см. раздел «База данных»). Django ORM пока не используется, формы ещё
+не реализованы; перенос сущностей в модели Django относится к
+следующим практическим работам.
 
 ## Django Template Language
 
@@ -104,6 +107,8 @@ HTML вынесен из Python-кода в шаблоны; view-функции 
 * **Контекст**: списки передаются как `series_items` и `entries`,
   отдельные объекты — как `series` и `entry`; для страниц с одним
   объектом отсутствие объекта обрабатывается ветвью `{% else %}`.
+  Результаты SQL-запросов (`sqlite3.Row`) используются в шаблонах так же,
+  как раньше использовались объекты.
 * **Циклы и условия**: `{% for %}` с `{% empty %}` для пустых списков,
   `{% if %}` / `{% elif %}` для статуса записи и состояния серии.
 * **Именованные URL**: ссылки формируются через `{% url 'series:list' %}`,
@@ -111,8 +116,8 @@ HTML вынесен из Python-кода в шаблоны; view-функции 
   в шаблонах нет.
 * **Фильтры**: `{{ series_items|length }}` (количество серий),
   `{{ series.title|default:"Без названия" }}` (значение по умолчанию),
-  `{{ entry.calculate_progress|floatformat:1 }}` (форматирование
-  процента прогресса).
+  `{{ entry.progress|floatformat:1 }}` (форматирование процента
+  прогресса).
 
 ## Статические файлы
 
@@ -125,6 +130,115 @@ HTML вынесен из Python-кода в шаблоны; view-функции 
 
 В шаблонах используются `{% load static %}` и `{% static '...' %}`.
 Bootstrap сохранён для базовой вёрстки, собственный CSS дополняет его.
+
+## База данных (ПР7)
+
+Данные проекта перенесены из JSON в базу SQLite `data/comics.sqlite`.
+База работает отдельно от Django ORM: Python обращается к ней через
+стандартный модуль `sqlite3`.
+
+```text
+SQLite → SQL → sqlite3 → Django view → context → шаблон → страница
+```
+
+### Структура базы данных
+
+Таблица `series` — серии комиксов:
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | INTEGER, PRIMARY KEY | идентификатор |
+| `title` | TEXT NOT NULL | название серии |
+| `publisher` | TEXT NOT NULL | издатель |
+| `author` | TEXT NOT NULL | автор |
+| `issues_total` | INTEGER NOT NULL | число выпусков в серии |
+| `age_limit` | INTEGER NOT NULL | возрастное ограничение |
+
+Таблица `users` — пользователи:
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | INTEGER, PRIMARY KEY | идентификатор |
+| `name` | TEXT NOT NULL | имя |
+| `age` | INTEGER NOT NULL | возраст |
+| `email` | TEXT NOT NULL | электронная почта |
+
+Таблица `collection_entries` — записи коллекции:
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | INTEGER, PRIMARY KEY | идентификатор |
+| `series_id` | INTEGER NOT NULL, FOREIGN KEY → `series.id` | серия |
+| `user_id` | INTEGER NOT NULL, FOREIGN KEY → `users.id` | пользователь |
+| `status_code` | INTEGER NOT NULL DEFAULT 1 | 1 запланировано, 2 читаю, 3 прочитано, 4 брошено |
+| `issues_read` | INTEGER NOT NULL DEFAULT 0 | прочитано выпусков |
+| `is_removed` | INTEGER NOT NULL DEFAULT 0 | 0 — активна, 1 — удалена из коллекции |
+
+Одна серия может входить в записи нескольких пользователей, а один
+пользователь — иметь несколько записей; каждая запись связана ровно с
+одной серией и одним пользователем.
+
+### Файлы слоя базы данных
+
+* `sql/schema.sql` — команды создания таблиц (`CREATE TABLE IF NOT
+  EXISTS`, первичные и внешние ключи);
+* `sql/queries.sql` — проверенные SQL-запросы с комментариями;
+* `db/database.py` — подключение к SQLite (`get_connection()` включает
+  `PRAGMA foreign_keys = ON`) и применение схемы (`init_db()`);
+* `db/import_json.py` — однократный перенос данных из JSON-файлов
+  (`executemany()` с параметрами `?`, транзакция с `commit()` и
+  `rollback()`);
+* `data/comics.sqlite` — файл базы данных.
+
+Создание базы и перенос данных:
+
+```bash
+python -m db.import_json
+```
+
+Чтобы создать базу заново, удалите файл `data/comics.sqlite` и
+повторите команду. Таблицы импортируются в порядке `series`, `users`,
+`collection_entries`: записи коллекции ссылаются на серии и
+пользователей. Проверка в SQLite CLI:
+
+```bash
+sqlite3 data/comics.sqlite
+```
+
+### SQL-запросы (`sql/queries.sql`)
+
+В файле 17 запросов:
+
+* выборка списков и сортировка — 1.1–1.3 (`SELECT`, `ORDER BY`,
+  `LIMIT`);
+* фильтрация — 2.1–2.4 (`WHERE`, несколько условий, подзапрос
+  `NOT IN`);
+* соединение таблиц — 3.1–3.3 (`JOIN`, `AS`, `ROUND`, `CASE`);
+* агрегатные функции — 4.1–4.3 (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`);
+* группировка — 5.1–5.4 (`GROUP BY`, `LEFT JOIN`, `HAVING`);
+* выборка по идентификатору — 6.1–6.2.
+
+Значения в запросы передаются параметрами `?`; конкатенация строк и
+f-строки для подстановки значений не используются.
+
+### Получение данных в Django
+
+Представления открывают соединение через `db.database.get_connection()`,
+задают `conn.row_factory = sqlite3.Row` (обращение к полям по именам:
+`row["title"]` в Python и `{{ series.title }}` в шаблоне), выполняют
+запрос и передают результат в шаблон через `context`.
+
+| Страница | Запросы |
+|---|---|
+| `/series/` | 1.1 |
+| `/series/<id>/` | 6.1, 6.2 |
+| `/series/available/?user=<id>` | 1.2, 2.4 (параметризованный запрос) |
+| `/collection/` | 3.1 |
+| `/collection/<id>/` | 3.2 |
+| `/collection/statistics/` | 4.1, 4.2, 5.1, 5.2, 5.3, 5.4 |
+
+JSON-файлы `data/*.json` сохраняются как исходные данные и как
+хранилище консольной версии (ПР1–ПР3).
 
 ## Основные сущности
 
@@ -241,6 +355,11 @@ User
 функциями модуля `utils.py`, которые повторяют запрос до получения
 корректного значения.
 
+Консольная версия (`main.py`) по-прежнему использует JSON. Веб-версия
+с ПР7 читает данные из SQLite (`data/comics.sqlite`), в которую JSON
+перенесён скриптом `db/import_json.py`; подробности — в разделе
+«База данных (ПР7)».
+
 ## Структура проекта
 
 ```text
@@ -263,6 +382,14 @@ frameworks/
 │   ├── asgi.py
 │   └── wsgi.py
 │
+├── db/
+│   ├── __init__.py
+│   ├── database.py
+│   └── import_json.py
+├── sql/
+│   ├── schema.sql
+│   └── queries.sql
+│
 ├── templates/
 │   ├── base.html
 │   └── includes/
@@ -282,6 +409,7 @@ frameworks/
 │   ├── templates/series/
 │   │   ├── series_list.html
 │   │   ├── series_detail.html
+│   │   ├── available.html
 │   │   └── includes/series_card.html
 │   ├── views.py
 │   └── urls.py
@@ -289,6 +417,7 @@ frameworks/
 │   ├── templates/collection/
 │   │   ├── entry_list.html
 │   │   ├── entry_detail.html
+│   │   ├── statistics.html
 │   │   └── includes/entry_status.html
 │   ├── views.py
 │   └── urls.py
@@ -302,12 +431,14 @@ frameworks/
 ├── data/
 │   ├── series.json
 │   ├── users.json
-│   └── collection.json
+│   ├── collection.json
+│   └── comics.sqlite
 │
 ├── tests/
 │   ├── test_series.py
 │   ├── test_users.py
 │   ├── test_collection.py
+│   ├── test_db.py
 │   └── test_web.py
 │
 └── отчет/
@@ -321,6 +452,8 @@ frameworks/
 * `homepage/`, `series/`, `collection/` — Django-приложения
   (view-функции, маршруты, шаблоны страниц, статические файлы);
 * `templates/` — шаблоны уровня проекта (`base.html`, навигация);
+* `db/` — слой базы данных SQLite: подключение и перенос данных из JSON;
+* `sql/` — схема базы и SQL-запросы проекта;
 * `main.py` — консольная версия приложения: главное меню и
   пользовательские сценарии (сохранена с ПР3);
   работает с объектами `Series`, `User` и `CollectionEntry`, не хранит
@@ -344,6 +477,7 @@ frameworks/
 
 ```bash
 pip install -r requirements.txt
+python -m db.import_json      # создание базы SQLite и перенос данных
 python manage.py migrate
 python manage.py runserver
 ```
@@ -369,11 +503,25 @@ python manage.py check
 flake8 . --extend-exclude=venv
 ```
 
+## Текущий этап разработки
+
+На ПР7 данные проекта перенесены из JSON в базу данных SQLite:
+
+* создана база данных `data/comics.sqlite`;
+* таблицы созданы командами из `sql/schema.sql`;
+* данные перенесены из JSON скриптом `db/import_json.py`;
+* SQL-запросы сохранены в `sql/queries.sql`;
+* Django-представления получают данные из SQLite;
+* страницы серий, записей коллекции, поиска доступных серий и
+  статистики работают с базой данных.
+
+На следующих практических работах база данных будет подключена к
+Django с использованием Django ORM.
+
 ## План развития
 
 На следующих этапах планируется:
 
-* база данных SQLite и SQL-запросы (ПР7);
 * перенос сущностей `Series`, `User` и `CollectionEntry` в модели
   Django и Django ORM;
 * формы создания и редактирования записей коллекции;

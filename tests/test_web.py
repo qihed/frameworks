@@ -5,7 +5,7 @@ from django.test import Client, override_settings
 
 
 @pytest.fixture
-def client():
+def client(sample_db):
     return Client()
 
 
@@ -126,3 +126,70 @@ def test_views_do_not_use_page_function():
         source = (Path(app) / "views.py").read_text(encoding="utf-8")
         assert "page(" not in source.replace("def page_not_found(", "")
         assert "HttpResponse" not in source
+
+
+def test_available_series_form_without_user(client):
+    html = client.get("/series/available/").content.decode()
+    assert "Доступные серии" in html
+    assert "Мария Смирнова" in html
+    assert "Watchmen" not in html
+
+
+def test_available_series_for_user(client):
+    html = client.get("/series/available/?user=2").content.decode()
+    assert "Watchmen" in html
+    assert "Saga" not in html
+    assert "Naruto" not in html
+
+
+def test_available_series_without_matches(client, sample_db):
+    import sqlite3
+
+    connection = sqlite3.connect(sample_db)
+    connection.execute(
+        "INSERT INTO collection_entries (id, series_id, user_id) "
+        "VALUES (100, 4, 2)"
+    )
+    connection.commit()
+    connection.close()
+
+    html = client.get("/series/available/?user=2").content.decode()
+    assert "Подходящих серий нет" in html
+
+
+@pytest.mark.parametrize("value", ["abc", "999"])
+def test_available_series_invalid_user(client, value):
+    response = client.get(f"/series/available/?user={value}")
+    assert response.status_code == 200
+    assert "text-danger" in response.content.decode()
+
+
+def test_statistics_page(client):
+    response = client.get("/collection/statistics/")
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert "Статистика коллекции" in html
+    assert "Прочитали больше 30 выпусков" in html
+    assert "Даниил" in html
+    assert "collection/statistics.html" in _template_names(response)
+
+
+def test_navigation_contains_statistics(client):
+    html = client.get("/").content.decode()
+    assert 'href="/collection/statistics/"' in html
+
+
+def test_collection_list_shows_only_active_entries(client):
+    html = client.get("/collection/").content.decode()
+    assert "Активных записей: 6" in html
+    assert "Удалено" not in html
+
+
+def test_views_use_parameters_not_string_formatting():
+    from pathlib import Path
+
+    for app in ("series", "collection"):
+        source = (Path(app) / "views.py").read_text(encoding="utf-8")
+        assert 'execute(f"' not in source
+        assert "execute(f'" not in source
+        assert ".format(" not in source

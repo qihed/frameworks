@@ -10,6 +10,11 @@
     <p>
         Всего серий: {{ series_items|length }}
     </p>
+    <p>
+        <a href="{% url 'series:available' %}">
+            Найти серию, доступную пользователю
+        </a>
+    </p>
 
     {% for series in series_items %}
         {% include "series/includes/series_card.html" %}

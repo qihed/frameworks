@@ -18,22 +18,22 @@
 
                 <p class="card-text">
                     <strong>Серия:</strong>
-                    <a href="{% url 'series:detail' entry.series.id %}">
-                        {{ entry.series.title }}
+                    <a href="{% url 'series:detail' entry.series_id %}">
+                        {{ entry.series_title }}
                     </a>
                 </p>
                 <p class="card-text">
                     <strong>Пользователь:</strong>
-                    {{ entry.user.name }}
+                    {{ entry.user_name }}
                 </p>
                 <p class="card-text">
                     <strong>Прогресс:</strong>
-                    {{ entry.issues_read }} из {{ entry.series.issues_total }}
-                    ({{ entry.calculate_progress|floatformat:1 }} %)
+                    {{ entry.issues_read }} из {{ entry.issues_total }}
+                    ({{ entry.progress|floatformat:1 }} %)
                 </p>
                 <p class="card-text">
                     <strong>Осталось прочитать:</strong>
-                    {{ entry.count_issues_left }}
+                    {{ entry.issues_left }}
                 </p>
                 <p class="card-text">
                     <strong>Статус:</strong>
